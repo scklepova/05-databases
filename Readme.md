@@ -36,3 +36,19 @@ netsh http add urlacl url=http://+:15000/ user=Everyone listen=yes
 2. Идем на шарду с этим номером.
 
 Все проверяют тесты `/SimpleStorage.Tests/Sharding/Task3Tests.cs`, чтобы их запустить, нужно убрать атрибут `[Ignore]` (все как на паре).
+
+####Quorum
+Нужно реализовать схему QuorumRead-QuorumWrite.
+
+Изменения нужно будет вносить в `ValuesController.cs` и `SimpleStorageClient.cs`.
+
+В методах `Get` и `Put` в `ValuesController`, помимо операции с локальным `IStorage` нужно отправить аналогичную операцию на другие реплики и получить успешный ответ от Quorum узлов. Не забудьте выбрать самые актуальные данные в методе `Get`.
+Для того чтобы избежать вечного цикла используйте `InternalClient`.
+
+Запустить нужную конфигурацию кластера можно скриптом `runAll.bat`:
+
+```
+\SimpleStorage\bin\Debug\runAll.bat
+```
+
+Все проверяют тесты `/SimpleStorage.Tests/ReplicationAndConsistency/Task2Tests.cs`, чтобы их запустить, нужно убрать атрибут `[Ignore]` (все как на паре).
