@@ -3,6 +3,7 @@ netsh http add urlacl url=http://+:15000/ user=Everyone listen=yes
 ###Презентации
 
 * [Введение](https://github.com/konturschool/05-databases/raw/master/Презентации/Introduction.pdf)
+* [Репликация и консистентность](https://github.com/konturschool/05-databases/raw/master/Презентации/Replication&Consistency.pptx)
 * [Шардинг](https://github.com/konturschool/05-databases/raw/master/Презентации/Sharding.pdf)
 
 
