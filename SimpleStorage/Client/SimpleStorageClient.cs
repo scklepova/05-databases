@@ -19,15 +19,24 @@ namespace Client
 
         public void Put(string id, Value value)
         {
-            var putUri = endpoints.First() + "api/values/" + id;
+            var shardNumber = GetShardNumber(id);
+            var putUri = endpoints.ElementAt(shardNumber) + "api/values/" + id;
             using (var client = new HttpClient())
             using (var response = client.PutAsJsonAsync(putUri, value).Result)
                 response.EnsureSuccessStatusCode();
         }
 
+        private static int GetShardNumber(string id)
+        {
+            var coordinatorClient = new CoordinatorClient("http://127.0.0.1:17000/");
+            var shardNumber = coordinatorClient.Get(id);
+            return shardNumber;
+        }
+
         public Value Get(string id)
         {
-            var requestUri = endpoints.First() + "api/values/" + id;
+            var shardNumber = GetShardNumber(id);
+            var requestUri = endpoints.ElementAt(shardNumber) + "api/values/" + id;
             using (var client = new HttpClient())
             using (var response = client.GetAsync(requestUri).Result)
             {
