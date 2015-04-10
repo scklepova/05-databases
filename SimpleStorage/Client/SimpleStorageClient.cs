@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
+using System.Web.Http;
 using Domain;
 
 namespace Client
@@ -19,21 +21,32 @@ namespace Client
 
         public void Put(string id, Value value)
         {
-            var putUri = endpoints.First() + "api/values/" + id;
-            using (var client = new HttpClient())
-            using (var response = client.PutAsJsonAsync(putUri, value).Result)
-                response.EnsureSuccessStatusCode();
+            foreach (var endpoint in endpoints)
+            {
+                var putUri = endpoint + "api/values/" + id;
+                using (var client = new HttpClient())
+                using (var response = client.PutAsJsonAsync(putUri, value).Result)
+                    if (response.IsSuccessStatusCode)
+                        return;
+            }
+            throw new HttpResponseException(HttpStatusCode.InternalServerError);
         }
 
         public Value Get(string id)
         {
-            var requestUri = endpoints.First() + "api/values/" + id;
-            using (var client = new HttpClient())
-            using (var response = client.GetAsync(requestUri).Result)
+            foreach (var endpoint in endpoints)
             {
-                response.EnsureSuccessStatusCode();
-                return response.Content.ReadAsAsync<Value>().Result;
+                var requestUri = endpoint + "api/values/" + id;
+                using (var client = new HttpClient())
+                using (var response = client.GetAsync(requestUri).Result)
+                {
+                    //response.EnsureSuccessStatusCode();
+                    if (response.IsSuccessStatusCode)
+                        return response.Content.ReadAsAsync<Value>().Result;
+                }
             }
+
+            throw new Exception("All replicas failed");
         }
     }
 }
