@@ -45,11 +45,17 @@ namespace SimpleStorage.Controllers
                 try
                 {
                     var nodeResult = client.Get(id);
+                    founded++;
                     if (nodeResult != null)
                     {
-                        founded++;
-                        result = nodeResult;
+                        if (result == null || nodeResult.Revision >= result.Revision)
+                            result = nodeResult;
                     }
+                }
+                catch (HttpResponseException e)
+                {
+                    if (e.Response.StatusCode == HttpStatusCode.NotFound)
+                        founded++;
                 }
                 catch { }
                 
@@ -57,8 +63,8 @@ namespace SimpleStorage.Controllers
                     break;
             }
             
-            if (result == null)
-                throw new HttpResponseException(HttpStatusCode.NotFound);
+            if (result == null || founded < quorum)
+                throw new HttpResponseException(HttpStatusCode.InternalServerError);
             return result;
         }
 
