@@ -14,14 +14,17 @@ namespace SimpleStorage.Controllers
         private readonly IConfiguration configuration;
         private readonly IStateRepository stateRepository;
         private readonly IStorage storage;
-        private int quorum;
+        private readonly int quorum;
 
         public ValuesController(IStorage storage, IStateRepository stateRepository, IConfiguration configuration)
         {
             this.storage = storage;
             this.stateRepository = stateRepository;
             this.configuration = configuration;
-            quorum = (configuration.OtherShardsPorts.Count() + 1)/2 + 1;
+            
+            quorum = (configuration.OtherReplicasPorts.Count() + 1)/2 + 1;
+            Console.WriteLine("Quorum = {0}", quorum);
+            
         }
 
         private void CheckState()
@@ -37,14 +40,19 @@ namespace SimpleStorage.Controllers
             var nodes = GetAllNodes();
             var founded = 0;
             Value result = null;
-            foreach (var node in nodes)
+            foreach (var client in nodes.Select(node => new InternalClient(node)))
             {
-                var client = new InternalClient(node);
-                var nodeResult = client.Get(id);
-                if (nodeResult == null)
-                    founded++;
-
-                result = nodeResult;
+                try
+                {
+                    var nodeResult = client.Get(id);
+                    if (nodeResult != null)
+                    {
+                        founded++;
+                        result = nodeResult;
+                    }
+                }
+                catch { }
+                
                 if (founded >= quorum)
                     break;
             }
@@ -56,7 +64,7 @@ namespace SimpleStorage.Controllers
 
         private List<string> GetAllNodes()
         {
-            var nodes = configuration.OtherShardsPorts.Select(port => String.Format("http://127.0.0.1:{0}/", port)).ToList();
+            var nodes = configuration.OtherReplicasPorts.Select(port => String.Format("http://127.0.0.1:{0}/", port)).ToList();
             nodes.Add(String.Format("http://127.0.0.1:{0}/", configuration.CurrentNodePort));
             return nodes;
         }
@@ -65,18 +73,24 @@ namespace SimpleStorage.Controllers
         public void Put(string id, [FromBody] Value value)
         {
             CheckState();
-//            storage.Set(id, value);
             var nodes = GetAllNodes();
             
             var writed = 0;
-            foreach (var node in nodes)
+            foreach (var client in nodes.Select(node => new InternalClient(node)))
             {
-                var client = new InternalClient(node);
-                client.Put(id, value);
-                writed++;
+                try
+                {
+                    client.Put(id, value);
+                    writed++;
+                }
+                catch {}
+                
                 if (writed >= quorum)
                     break;
             }
+
+            if (writed < quorum)
+                throw  new Exception("Wasn't writed to quorum replicas");
         }
     }
 }

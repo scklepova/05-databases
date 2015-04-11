@@ -18,5 +18,6 @@ namespace SimpleStorage
 
         public int CurrentNodePort { get; set; }
         public int[] OtherShardsPorts { get; set; }
+        public int[] OtherReplicasPorts { get; set; }
     }
 }

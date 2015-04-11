@@ -21,9 +21,8 @@ namespace Client
 
         public void Put(string id, Value value)
         {
-            foreach (var endpoint in endpoints)
+            foreach (var putUri in endpoints.Select(endpoint => endpoint + "api/values/" + id))
             {
-                var putUri = endpoint + "api/values/" + id;
                 using (var client = new HttpClient())
                 using (var response = client.PutAsJsonAsync(putUri, value).Result)
                     if (response.IsSuccessStatusCode)
@@ -34,13 +33,11 @@ namespace Client
 
         public Value Get(string id)
         {
-            foreach (var endpoint in endpoints)
+            foreach (var requestUri in endpoints.Select(endpoint => endpoint + "api/values/" + id))
             {
-                var requestUri = endpoint + "api/values/" + id;
                 using (var client = new HttpClient())
                 using (var response = client.GetAsync(requestUri).Result)
                 {
-                    //response.EnsureSuccessStatusCode();
                     if (response.IsSuccessStatusCode)
                         return response.Content.ReadAsAsync<Value>().Result;
                 }
